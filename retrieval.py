@@ -124,11 +124,31 @@ def search(
         Each entry contains: ``paper_id``, ``title``, ``section_type``,
         ``page_number``, ``status``, ``content``, ``score``.
     """
-    encoder = _get_encoder()
-    vector = encoder.encode(query).tolist()
-
     qdrant = _get_qdrant()
     query_filter = _build_filter(filters or {})
+
+    if not query.strip():
+        records, _ = qdrant.scroll(
+            collection_name=_COLLECTION,
+            scroll_filter=query_filter,
+            limit=top_k,
+            with_payload=True,
+        )
+        return [
+            {
+                "paper_id": (r.payload or {}).get("paper_id", ""),
+                "title": (r.payload or {}).get("title", ""),
+                "section_type": (r.payload or {}).get("section_type", ""),
+                "page_number": (r.payload or {}).get("page_number", None),
+                "status": (r.payload or {}).get("status", ""),
+                "content": (r.payload or {}).get("content", ""),
+                "score": 0.0,
+            }
+            for r in records
+        ]
+
+    encoder = _get_encoder()
+    vector = encoder.encode(query).tolist()
 
     hits = qdrant.search(
         collection_name=_COLLECTION,
@@ -138,22 +158,18 @@ def search(
         with_payload=True,
     )
 
-    results: list[dict] = []
-    for hit in hits:
-        payload = hit.payload or {}
-        results.append(
-            {
-                "paper_id": payload.get("paper_id", ""),
-                "title": payload.get("title", ""),
-                "section_type": payload.get("section_type", ""),
-                "page_number": payload.get("page_number", None),
-                "status": payload.get("status", ""),
-                "content": payload.get("content", ""),
-                "score": hit.score,
-            }
-        )
-
-    return results
+    return [
+        {
+            "paper_id": (hit.payload or {}).get("paper_id", ""),
+            "title": (hit.payload or {}).get("title", ""),
+            "section_type": (hit.payload or {}).get("section_type", ""),
+            "page_number": (hit.payload or {}).get("page_number", None),
+            "status": (hit.payload or {}).get("status", ""),
+            "content": (hit.payload or {}).get("content", ""),
+            "score": hit.score,
+        }
+        for hit in hits
+    ]
 
 
 # ---------------------------------------------------------------------------

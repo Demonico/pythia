@@ -4,6 +4,12 @@ import streamlit as st
 
 st.set_page_config(page_title="WG21 RAG", layout="wide")
 
+st.markdown("""
+<style>
+[data-testid="stAppDeployButton"] {display: none;}
+</style>
+""", unsafe_allow_html=True)
+
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 # ---------------------------------------------------------------------------
@@ -39,56 +45,53 @@ with tab_search:
     query = st.text_input("Query", key="search_query")
 
     if st.button("Search", key="btn_search"):
-        if not query.strip():
-            st.warning("Please enter a query.")
-        else:
-            filters = {}
-            if filter_status:
-                filters["status"] = filter_status
-            if filter_section_type:
-                filters["section_type"] = filter_section_type
-            if filter_author.strip():
-                filters["author"] = filter_author.strip()
-            if filter_date_from:
-                filters["date_from"] = filter_date_from.isoformat()
-            if filter_date_to:
-                filters["date_to"] = filter_date_to.isoformat()
+        filters = {}
+        if filter_status:
+            filters["status"] = filter_status
+        if filter_section_type:
+            filters["section_type"] = filter_section_type
+        if filter_author.strip():
+            filters["author"] = filter_author.strip()
+        if filter_date_from:
+            filters["date_from"] = filter_date_from.isoformat()
+        if filter_date_to:
+            filters["date_to"] = filter_date_to.isoformat()
 
-            payload = {
-                "query": query,
-                "filters": filters,
-                "top_n": int(top_n),
-            }
+        payload = {
+            "query": query,
+            "filters": filters,
+            "top_n": int(top_n),
+        }
 
-            try:
-                response = requests.post(f"{API_BASE_URL}/search", json=payload, timeout=30)
-                response.raise_for_status()
-                results = response.json()
-            except requests.exceptions.ConnectionError:
-                st.error("Could not connect to the API. Is it running?")
-                results = None
-            except requests.exceptions.HTTPError as exc:
-                st.error(f"API error: {exc}")
-                results = None
-            except Exception as exc:
-                st.error(f"Unexpected error: {exc}")
-                results = None
+        try:
+            response = requests.post(f"{API_BASE_URL}/search", json=payload, timeout=30)
+            response.raise_for_status()
+            results = response.json()
+        except requests.exceptions.ConnectionError:
+            st.error("Could not connect to the API. Is it running?")
+            results = None
+        except requests.exceptions.HTTPError as exc:
+            st.error(f"API error: {exc}")
+            results = None
+        except Exception as exc:
+            st.error(f"Unexpected error: {exc}")
+            results = None
 
-            if results is not None:
-                if not results:
-                    st.info("No results found.")
-                else:
-                    for item in results:
-                        paper_id = item.get("paper_id", "")
-                        section_type = item.get("section_type", "")
-                        score = item.get("rerank_score") or item.get("score", 0.0)
-                        label = f"{paper_id} — {section_type} (score: {score:.3f})"
-                        with st.expander(label):
-                            st.write(f"**Title:** {item.get('title', '')}")
-                            st.write(f"**Status:** {item.get('status', '')}")
-                            st.write(f"**Page:** {item.get('page_number', '')}")
-                            st.write("**Content:**")
-                            st.write(item.get("content", ""))
+        if results is not None:
+            if not results:
+                st.info("No results found.")
+            else:
+                for item in results:
+                    paper_id = item.get("paper_id", "")
+                    section_type = item.get("section_type", "")
+                    score = item.get("rerank_score") or item.get("score", 0.0)
+                    label = f"{paper_id} — {section_type} (score: {score:.3f})"
+                    with st.expander(label):
+                        st.write(f"**Title:** {item.get('title', '')}")
+                        st.write(f"**Status:** {item.get('status', '')}")
+                        st.write(f"**Page:** {item.get('page_number', '')}")
+                        st.write("**Content:**")
+                        st.write(item.get("content", ""))
 
 # ---------------------------------------------------------------------------
 # Paper Tab

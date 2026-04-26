@@ -59,10 +59,20 @@ Re-running is safe — the collection is wiped and rebuilt from scratch each tim
 
 ## Run
 
+Start the API:
+
 ```bash
-uvicorn main:app --reload   # API  → http://localhost:8000
-streamlit run app.py        # UI   → http://localhost:8501
+uvicorn main:app --reload
 ```
+
+In a separate terminal, start the UI:
+
+```bash
+streamlit run app.py
+```
+
+API: `http://localhost:8000` — Swagger UI at `http://localhost:8000/docs`
+UI: `http://localhost:8501`
 
 Swagger UI is available at `http://localhost:8000/docs`.
 
