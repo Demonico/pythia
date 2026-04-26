@@ -11,5 +11,8 @@ dependencies = [
     "cohere>=5.0.0",
     "networkx>=3.3",
     "streamlit>=1.35.0",
-    "pylint>=4.0.5",
+    "ruff>=0.4.0",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"ingest.py" = ["E402"]
