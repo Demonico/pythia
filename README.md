@@ -1,6 +1,6 @@
 # Pythia
 
-In ancient Greece, Pythia was the Oracle of Delphi — the figure you consulted
+In Ancient Greece, Pythia was the Oracle of Delphi — the figure you consulted
 when you needed answers from a vast and complex body of knowledge. You asked a
 question; she gave you meaning, not just facts.
 
@@ -23,14 +23,14 @@ time, the question is embedded and matched against the index. Results are
 optionally reranked by Cohere for better relevance. A citation graph is built
 from cross-references between papers and serialized alongside the index.
 
-| Layer | Technology |
-|---|---|
-| Embeddings | `sentence-transformers` (`all-MiniLM-L6-v2`) |
-| Vector store | Qdrant (Docker) |
-| Reranking | Cohere (`rerank-english-v3.0`) — optional |
-| Citation graph | NetworkX |
-| API | FastAPI |
-| UI | Streamlit |
+| Layer          | Technology                                   |
+|----------------|----------------------------------------------|
+| Embeddings     | `sentence-transformers` (`all-MiniLM-L6-v2`) |
+| Vector store   | Qdrant (Docker)                              |
+| Reranking      | Cohere (`rerank-english-v3.0`) — optional    |
+| Citation graph | NetworkX                                     |
+| API            | FastAPI                                      |
+| UI             | Streamlit                                    |
 
 ---
 
@@ -38,14 +38,14 @@ from cross-references between papers and serialized alongside the index.
 
 20 papers covering:
 
-| Area | Papers |
-|---|---|
-| Async / execution | P2300, P2444 |
-| Coroutines | P0057 |
-| Ranges | P0896 |
-| Safety / profiles | P3081 |
-| Concurrency | P1492, P1493, P2762, P2816, P2899 |
-| Foundational / direction | P0939, N4685, and others |
+| Area                     | Papers                            |
+|--------------------------|-----------------------------------|
+| Async / execution        | P2300, P2444                      |
+| Coroutines               | P0057                             |
+| Ranges                   | P0896                             |
+| Safety / profiles        | P3081                             |
+| Concurrency              | P1492, P1493, P2762, P2816, P2899 |
+| Foundational / direction | P0939, N4685, and others          |
 
 ---
 
@@ -71,7 +71,7 @@ export COHERE_API_KEY=<your-key>
 
 Before the app can search anything, the PDFs need to be parsed, chunked,
 embedded, and loaded into Qdrant. This also builds the citation graph and writes
-it to `graph.json`. It takes ~5–10 minutes on first run and is safe to re-run —
+it to `graph.json`. It takes ~5–10 minutes on the first run and is safe to re-run —
 the collection is wiped and rebuilt from scratch each time.
 
 ```bash
@@ -94,11 +94,11 @@ Then start the UI in a second terminal:
 streamlit run app.py
 ```
 
-| Service | URL |
-|---|---|
-| UI | `http://localhost:8501` |
-| API | `http://localhost:8000` |
-| Swagger UI | `http://localhost:8000/docs` |
+| Service          | URL                               |
+|------------------|-----------------------------------|
+| UI               | `http://localhost:8501`           |
+| API              | `http://localhost:8000`           |
+| Swagger UI       | `http://localhost:8000/docs`      |
 | Qdrant dashboard | `http://localhost:6333/dashboard` |
 
 ---
