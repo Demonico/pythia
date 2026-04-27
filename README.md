@@ -20,14 +20,14 @@ yet in the index.
 PDFs are parsed and split into labelled sections (motivation, proposal, wording,
 etc.), then embedded using `sentence-transformers` and stored in Qdrant. At query
 time, the question is embedded and matched against the index. Results are
-optionally reranked by Cohere for better relevance. A citation graph is built
+reranked by a CrossEncoder for better relevance. A citation graph is built
 from cross-references between papers and serialized alongside the index.
 
 | Layer          | Technology                                   |
 |----------------|----------------------------------------------|
 | Embeddings     | `sentence-transformers` (`all-MiniLM-L6-v2`) |
 | Vector store   | Qdrant (Docker)                              |
-| Reranking      | Cohere (`rerank-english-v3.0`) — optional    |
+| Reranking      | `sentence-transformers` CrossEncoder         |
 | Citation graph | NetworkX                                     |
 | API            | FastAPI                                      |
 | UI             | Streamlit                                    |
@@ -56,13 +56,6 @@ You will need Python 3.14+ and Docker. Install dependencies and start Qdrant:
 ```bash
 uv sync
 docker compose up -d
-```
-
-Cohere reranking is optional but improves result quality. If you have a key,
-set it before starting the API. Without it, results fall back to vector score order.
-
-```bash
-export COHERE_API_KEY=<your-key>
 ```
 
 ---
@@ -142,7 +135,7 @@ are available at `http://localhost:8000/docs`.
 
 ### `POST /search`
 
-Semantic search with optional filters and Cohere reranking. Leave `query` blank
+Semantic search with optional filters and CrossEncoder reranking. Leave `query` blank
 to browse by filters only.
 
 ```json

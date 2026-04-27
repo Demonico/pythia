@@ -7,7 +7,7 @@
 - Streamlit
 - `pdfplumber` for PDF parsing
 - `sentence-transformers` for embeddings
-- `cohere` for reranking
+- `sentence-transformers` CrossEncoder for reranking
 - `networkx` for citation graph
 
 ---
@@ -86,7 +86,7 @@ class Paper:
 - Return top_k candidates
 
 ### `rerank(query, candidates, top_n=5)`
-- Cohere reranker pass over candidates
+- CrossEncoder reranker pass over candidates
 - Return top_n with scores
 
 ### `graph_context(paper_id)`
