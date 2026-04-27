@@ -4,6 +4,29 @@ A running log of development sessions, written to support future articles about 
 
 ---
 
+## Pre-Recording Bug Sweep: Six Fixes Before the Camera Rolls
+*Monday April 27, 2026, 09:38*
+
+### What We Built
+Fixed six bugs found while prepping to record a demo of Pythia — broken citation display, negative search scores, malformed titles and authors in the corpus, garbled PDF artifacts in author fields, and status classification that never worked. The app went from visibly rough to demo-ready.
+
+### How It Came Together
+All six issues were planned one at a time before any code was written. Each fix was walked through conversationally — root cause, proposed solution, tradeoffs — and confirmed before moving to the next. The fixes split across three layers: `ingest.py` for metadata parsing (titles, authors, status), `retrieval.py` and `main.py` for citation lookup, and `app.py` for score display.
+
+The metadata fixes were the bulk of the work and required the most iteration. The title heuristic originally rejected lines that *were* a bare paper ID but not lines that *contained* one, so "Document Number: N4685" slipped through and became the title. Switching `.match()` to `.search()` fixed that but exposed the next failure — "Date: 2017-07-31" was now the first valid line. This led to a growing exclusion filter: date lines, metadata field labels, email-containing lines, bullet points. Author parsing had a similar cascade: the label search covered all three front-matter pages, so it would match "author" mid-sentence in the body and return "regrets not proposing this in the C++20 design space." as an author name. Restricting to page 1 with `re.MULTILINE` fixed it.
+
+The citation bug turned out to be one word wrong. NetworkX changed its serialization key from `"links"` to `"edges"` in a newer version. `graph_context()` called `graph_data.get("links", [])`, which silently returned empty every time. 466 edges in the file, zero ever seen. One string changed, done.
+
+### The Interesting Parts
+The score normalization has a proper reason behind it: `cross-encoder/ms-marco-MiniLM-L-6-v2` outputs raw logits, and sigmoid is the mathematically correct inverse — it's what the model's final layer undoes. `1 / (1 + exp(-raw))` isn't cosmetic clamping, it preserves ordering and produces values that mean something.
+
+The planning phase repeatedly got stuck reading `graph.json` when it wasn't necessary for planning purposes. And despite the plan explicitly deferring ingest to the end, the script got run several times mid-session to check intermediate output — each run taking several minutes. The instinct to verify immediately after each change is hard to suppress, but for a slow script the right discipline is: make all the changes, then run once.
+
+### What's Next
+A handful of titles are still imperfect — P0896R4 picks up "Casey Carter", P0939R4 shows "IRECTION FOR" (a pdfplumber fragment of an all-caps heading). These are genuine PDF extraction limits for papers without a clean title line on page 1. Good enough to record; a proper fix would require structured front-matter parsing or a lookup against the WG21 paper index.
+
+---
+
 ## First Run, Runtime Surprises, and Polish
 *Sunday April 26, 2026, 6:01 PM*
 
