@@ -29,6 +29,7 @@ def _get_encoder():
     global _encoder
     if _encoder is None:
         from sentence_transformers import SentenceTransformer
+
         _encoder = SentenceTransformer("all-MiniLM-L6-v2")
     return _encoder
 
@@ -37,6 +38,7 @@ def _get_cross_encoder():
     global _cross_encoder
     if _cross_encoder is None:
         from sentence_transformers import CrossEncoder
+
         _cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     return _cross_encoder
 
@@ -59,6 +61,7 @@ def _get_qdrant() -> QdrantClient:
 # ---------------------------------------------------------------------------
 # Filter builder
 # ---------------------------------------------------------------------------
+
 
 def _build_filter(filters: dict) -> Filter | None:
     """Convert a user-supplied filters dict into a Qdrant Filter object."""
@@ -108,6 +111,7 @@ def _build_filter(filters: dict) -> Filter | None:
 # ---------------------------------------------------------------------------
 # search
 # ---------------------------------------------------------------------------
+
 
 def search(
     query: str,
@@ -183,6 +187,7 @@ def search(
 # ---------------------------------------------------------------------------
 # rerank
 # ---------------------------------------------------------------------------
+
 
 def rerank(
     query: str,

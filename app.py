@@ -5,11 +5,14 @@ import streamlit as st
 
 st.set_page_config(page_title="WG21 RAG", layout="wide")
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 [data-testid="stAppDeployButton"] {display: none;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
@@ -25,13 +28,24 @@ with st.sidebar:
     )
     filter_section_type = st.selectbox(
         "Section type",
-        options=["", "motivation", "proposal", "wording", "discussion", "introduction", "abstract", "other"],
+        options=[
+            "",
+            "motivation",
+            "proposal",
+            "wording",
+            "discussion",
+            "introduction",
+            "abstract",
+            "other",
+        ],
         key="filter_section_type",
     )
     filter_author = st.text_input("Author", key="filter_author")
     filter_date_from = st.date_input("Date from", value=None, key="filter_date_from")
     filter_date_to = st.date_input("Date to", value=None, key="filter_date_to")
-    top_n = st.number_input("Top N", min_value=1, max_value=20, value=5, step=1, key="top_n")
+    top_n = st.number_input(
+        "Top N", min_value=1, max_value=20, value=5, step=1, key="top_n"
+    )
 
 # ---------------------------------------------------------------------------
 # Tabs
@@ -158,17 +172,21 @@ with tab_paper:
 
                     rows = []
                     for entry in graph.get("cites", []):
-                        rows.append({
-                            "Relationship": "cites",
-                            "Paper ID": entry.get("paper_id", ""),
-                            "Boundary": entry.get("boundary", False),
-                        })
+                        rows.append(
+                            {
+                                "Relationship": "cites",
+                                "Paper ID": entry.get("paper_id", ""),
+                                "Boundary": entry.get("boundary", False),
+                            }
+                        )
                     for entry in graph.get("cited_by", []):
-                        rows.append({
-                            "Relationship": "cited_by",
-                            "Paper ID": entry.get("paper_id", ""),
-                            "Boundary": entry.get("boundary", False),
-                        })
+                        rows.append(
+                            {
+                                "Relationship": "cited_by",
+                                "Paper ID": entry.get("paper_id", ""),
+                                "Boundary": entry.get("boundary", False),
+                            }
+                        )
 
                     if not rows:
                         st.info("No citation data available.")
@@ -186,7 +204,9 @@ with tab_paper:
                             else:
                                 paper_cell = p
                                 boundary_cell = "No"
-                            table_lines.append(f"| {rel} | {paper_cell} | {boundary_cell} |")
+                            table_lines.append(
+                                f"| {rel} | {paper_cell} | {boundary_cell} |"
+                            )
                         st.markdown("\n".join(table_lines), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -212,7 +232,7 @@ with tab_corpus:
                 for item in corpus
             ]
             st.dataframe(rows, use_container_width=True)
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+    except requests.exceptions.ConnectionError, requests.exceptions.Timeout:
         st.warning("Corpus not available — is the API running?")
     except Exception as exc:
         st.warning(f"Corpus not available — is the API running? ({exc})")

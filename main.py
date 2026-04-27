@@ -18,6 +18,7 @@ _GRAPH_PATH = Path(__file__).parent / "graph.json"
 # Request / response models
 # ---------------------------------------------------------------------------
 
+
 class SearchFilters(BaseModel):
     status: str | None = None
     section_type: str | None = None
@@ -36,6 +37,7 @@ class SearchRequest(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+
 @app.post("/search")
 def search(req: SearchRequest) -> list[dict[str, Any]]:
     filters: dict[str, str] = {}
@@ -52,7 +54,9 @@ def search(req: SearchRequest) -> list[dict[str, Any]]:
 @app.get("/papers/{paper_id}")
 def get_paper(paper_id: str) -> dict[str, Any]:
     if not _GRAPH_PATH.exists():
-        raise HTTPException(status_code=503, detail="Index not built yet — run ingest.py first")
+        raise HTTPException(
+            status_code=503, detail="Index not built yet — run ingest.py first"
+        )
 
     with _GRAPH_PATH.open() as f:
         graph_data = json.load(f)
@@ -80,7 +84,9 @@ def get_graph(paper_id: str) -> dict[str, Any]:
     ctx = retrieval.graph_context(paper_id.strip().upper())
     if not ctx["cites"] and not ctx["cited_by"]:
         if not _GRAPH_PATH.exists():
-            raise HTTPException(status_code=503, detail="Index not built yet — run ingest.py first")
+            raise HTTPException(
+                status_code=503, detail="Index not built yet — run ingest.py first"
+            )
     return ctx
 
 
@@ -96,11 +102,13 @@ def get_corpus() -> list[dict[str, Any]]:
     for node in graph_data.get("nodes", []):
         if node.get("boundary"):
             continue
-        corpus.append({
-            "paper_id": node.get("id", node.get("paper_id", "")),
-            "title": node.get("title", ""),
-            "authors": node.get("authors", []),
-            "date": node.get("date", ""),
-            "status": node.get("status", ""),
-        })
+        corpus.append(
+            {
+                "paper_id": node.get("id", node.get("paper_id", "")),
+                "title": node.get("title", ""),
+                "authors": node.get("authors", []),
+                "date": node.get("date", ""),
+                "status": node.get("status", ""),
+            }
+        )
     return corpus

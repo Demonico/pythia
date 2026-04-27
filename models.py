@@ -11,10 +11,10 @@ class Section:
 
 @dataclass
 class Paper:
-    paper_id: str      # e.g. P2300R7
+    paper_id: str  # e.g. P2300R7
     title: str
     authors: list[str]
     date: str
-    status: str        # accepted, rejected, pending
+    status: str  # accepted, rejected, pending
     sections: list[Section] = field(default_factory=list)
     citations: list[str] = field(default_factory=list)  # paper_ids cited

@@ -97,16 +97,18 @@ def extract_metadata(pages: list[str], pdf_path: Path) -> dict:
 
     # Paper ID
     ids = _PAPER_ID_RE.findall(front)
-    paper_id = _normalise_paper_id(ids[0]) if ids else _derive_id_from_filename(pdf_path)
+    paper_id = (
+        _normalise_paper_id(ids[0]) if ids else _derive_id_from_filename(pdf_path)
+    )
 
     # Title: first line of page 1 that looks like a title.
     # Skip metadata fields, lines containing email addresses, and bare WG names.
     _META_FIELD_RE = re.compile(
-        r'(?i)^(?:date|reply(?:\s+to)?|revises?|project|audience|source'
-        r'|doc(?:ument)?(?:\s*no\.?|ument\s+number|\s*#)?'
-        r'|(?:library|evolution|core|sg\d+|working)\s+(?:working\s+)?group'
-        r'|programming\s+language'
-        r'|authors?|editors?)\s*[:\-#@]?'
+        r"(?i)^(?:date|reply(?:\s+to)?|revises?|project|audience|source"
+        r"|doc(?:ument)?(?:\s*no\.?|ument\s+number|\s*#)?"
+        r"|(?:library|evolution|core|sg\d+|working)\s+(?:working\s+)?group"
+        r"|programming\s+language"
+        r"|authors?|editors?)\s*[:\-#@]?"
     )
     title = ""
     for line in pages[0].splitlines():
@@ -116,8 +118,8 @@ def extract_metadata(pages: list[str], pdf_path: Path) -> dict:
             and not _PAPER_ID_RE.search(line)
             and not _META_FIELD_RE.match(line)
             and not _DATE_RE.fullmatch(line)
-            and '@' not in line
-            and not line.startswith(('\u2022', '\u2013', '\u2014'))
+            and "@" not in line
+            and not line.startswith(("\u2022", "\u2013", "\u2014"))
         ):
             title = line
             break
@@ -126,32 +128,33 @@ def extract_metadata(pages: list[str], pdf_path: Path) -> dict:
     # in page 1 only (avoids matching mid-sentence uses of 'author' in the body).
     authors: list[str] = []
     author_match = re.search(
-        r'^(?:Authors?|Editor|Editors?)\s*[:\-]?\s*(.+)',
-        pages[0], re.IGNORECASE | re.MULTILINE,
+        r"^(?:Authors?|Editor|Editors?)\s*[:\-]?\s*(.+)",
+        pages[0],
+        re.IGNORECASE | re.MULTILINE,
     )
     if author_match:
         raw_authors = author_match.group(1)
-        _CURLY_QUOTE_RE = re.compile(r'[\u201c\u201d\u2018\u2019]')
+        _CURLY_QUOTE_RE = re.compile(r"[\u201c\u201d\u2018\u2019]")
         authors = [
             a.strip()
-            for a in re.split(r'[,;]|\band\b', raw_authors)
+            for a in re.split(r"[,;]|\band\b", raw_authors)
             if (
                 a.strip()
                 and len(a.strip()) < 80
                 and not _CURLY_QUOTE_RE.search(a)
-                and not re.search(r'(?i)(blue|magenta|red|green|color)', a)
-                and not re.search(r'[a-z]{12,}', a)
+                and not re.search(r"(?i)(blue|magenta|red|green|color)", a)
+                and not re.search(r"[a-z]{12,}", a)
             )
         ]
 
     # Fallback: scan front matter for lines that look like "Firstname Lastname"
     # (exactly two capitalised words, no digits or punctuation).
     if not authors:
-        _NAME_RE = re.compile(r'^[A-Z][a-z]{2,}(?:\s+[A-Z]\.?)?\s+[A-Z][a-z]{2,}$')
+        _NAME_RE = re.compile(r"^[A-Z][a-z]{2,}(?:\s+[A-Z]\.?)?\s+[A-Z][a-z]{2,}$")
         candidates = [
             ln.strip()
             for ln in front.splitlines()
-            if _NAME_RE.match(ln.strip()) and not re.search(r'[\d:()\[\]]', ln)
+            if _NAME_RE.match(ln.strip()) and not re.search(r"[\d:()\[\]]", ln)
         ]
         authors = candidates[:6] if len(candidates) >= 2 else []
 
@@ -177,9 +180,9 @@ def extract_metadata(pages: list[str], pdf_path: Path) -> dict:
 
 # Patterns that indicate a section header
 _HEADER_PATTERNS = [
-    re.compile(r"^(\d+(\.\d+)*)\s+[A-Z][A-Za-z]"),   # numbered heading
-    re.compile(r"^[A-Z][A-Z\s\-/:]{4,}$"),             # ALL CAPS line
-    re.compile(r"^[A-Z][^.!?]{3,60}$"),                # short line no end punct
+    re.compile(r"^(\d+(\.\d+)*)\s+[A-Z][A-Za-z]"),  # numbered heading
+    re.compile(r"^[A-Z][A-Z\s\-/:]{4,}$"),  # ALL CAPS line
+    re.compile(r"^[A-Z][^.!?]{3,60}$"),  # short line no end punct
 ]
 
 
@@ -254,6 +257,7 @@ def extract_citations(pages: list[str]) -> list[str]:
 # Step 5: Embed and store
 # ---------------------------------------------------------------------------
 
+
 def _point_id(paper_id: str, section_type: str, page_number: int) -> str:
     name = f"{paper_id}:{section_type}:{page_number}"
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, name))
@@ -262,7 +266,9 @@ def _point_id(paper_id: str, section_type: str, page_number: int) -> str:
 def setup_qdrant(client: QdrantClient) -> None:
     existing = [c.name for c in client.get_collections().collections]
     if COLLECTION in existing:
-        print(f"  [qdrant] Deleting existing collection '{COLLECTION}' for idempotency.")
+        print(
+            f"  [qdrant] Deleting existing collection '{COLLECTION}' for idempotency."
+        )
         client.delete_collection(COLLECTION)
     client.create_collection(
         collection_name=COLLECTION,
@@ -309,6 +315,7 @@ def embed_and_store(
 # Graph construction
 # ---------------------------------------------------------------------------
 
+
 def build_graph(papers: list[Paper], corpus_ids: set[str]) -> nx.DiGraph:
     G = nx.DiGraph()
     for paper in papers:
@@ -338,6 +345,7 @@ def build_graph(papers: list[Paper], corpus_ids: set[str]) -> nx.DiGraph:
 # ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     pdf_files = sorted(PAPERS_DIR.glob("*.pdf"))
