@@ -4,8 +4,31 @@ A running log of development sessions, written to support future articles about 
 
 ---
 
+## First Run, Runtime Surprises, and Polish
+*Sunday April 26, 2026, 6:01 PM*
+
+### What We Built
+Got the stack running for the first time, fixed two runtime errors that only surfaced when actually using the app, cleaned up the Streamlit UI, replaced pylint with ruff, and rewrote the README from scratch.
+
+### How It Came Together
+The first real search query immediately hit a `'QdrantClient' object has no attribute 'search'` error — qdrant-client 1.9+ removed the `search` method in favour of `query_points`. One-line fix. The second issue was more of a UX gap: the search tab required a query string, which meant you couldn't browse by filter alone. Fixed by falling back to a Qdrant `scroll` when the query is blank, which pages through the collection with filters applied but no vector search.
+
+Pylint was causing problems and got swapped for ruff. One genuine issue was caught (unused import in `ingest.py`); the E402 warnings for imports-after-sys.path are intentional and suppressed per-file.
+
+The README went through several rounds — the first version was too technical up front, with commands before explanations. Rewrote it so every section leads with context before showing anything to run.
+
+### The Interesting Parts
+Streamlit's deploy button has no clean removal path. `toolbarMode = "minimal"` in config.toml removes it without a flash, but also kills the hamburger menu. The only way to remove just the deploy button is CSS injection via `st.markdown`, which causes a visible flash because the button renders before the styles apply. For a demo, the flash is the less-bad tradeoff — the hamburger menu is useful enough to keep.
+
+The name Pythia came up — named after the Oracle of Delphi, which is now in the README intro. Ask a question, get meaning back rather than facts. It fits.
+
+### What's Next
+Haven't recorded the Loom demo yet. That's the remaining piece.
+
+---
+
 ## Building a WG21 C++ Papers RAG Service in Parallel
-*Saturday April 26, 2026, 4:48 PM*
+*Sunday April 26, 2026, 4:48 PM*
 
 ### What We Built
 A full RAG pipeline for searching ISO C++ proposals: a PDF ingestion script that parses, chunks, embeds, and indexes 20 papers into Qdrant; a retrieval module with vector search, Cohere reranking, and citation graph traversal; a FastAPI backend with four endpoints; and a three-tab Streamlit UI. The project went from a hello-world FastAPI stub to a working end-to-end system in a single session.
