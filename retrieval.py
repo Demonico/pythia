@@ -10,7 +10,6 @@ Public API:
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +21,7 @@ from qdrant_client.models import FieldCondition, Filter, MatchText, MatchValue, 
 # ---------------------------------------------------------------------------
 
 _encoder = None
+_cross_encoder = None
 
 
 def _get_encoder():
@@ -31,6 +31,14 @@ def _get_encoder():
         from sentence_transformers import SentenceTransformer
         _encoder = SentenceTransformer("all-MiniLM-L6-v2")
     return _encoder
+
+
+def _get_cross_encoder():
+    global _cross_encoder
+    if _cross_encoder is None:
+        from sentence_transformers import CrossEncoder
+        _cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    return _cross_encoder
 
 
 # ---------------------------------------------------------------------------
@@ -181,54 +189,15 @@ def rerank(
     candidates: list[dict],
     top_n: int = 5,
 ) -> list[dict]:
-    """Re-rank *candidates* with the Cohere reranker and return the top *top_n*.
-
-    Parameters
-    ----------
-    query:
-        The original search query string.
-    candidates:
-        List of result dicts as returned by :func:`search`.
-    top_n:
-        Number of top results to return after reranking.
-
-    Returns
-    -------
-    list[dict]
-        The top *top_n* candidates sorted by ``rerank_score`` (descending).
-        Each dict is augmented with a ``rerank_score`` field (float or None).
-    """
     if not candidates:
         return []
 
-    cohere_api_key = os.environ.get("COHERE_API_KEY")
+    model = _get_cross_encoder()
+    pairs = [[query, c.get("content", "")] for c in candidates]
+    scores = model.predict(pairs)
 
-    # Graceful fallback when no API key is available.
-    if not cohere_api_key:
-        fallback = [dict(c, rerank_score=None) for c in candidates[:top_n]]
-        return fallback
-
-    import cohere
-
-    co = cohere.Client(cohere_api_key)
-
-    documents = [c.get("content", "") for c in candidates]
-
-    response = co.rerank(
-        model="rerank-english-v3.0",
-        query=query,
-        documents=documents,
-        top_n=top_n,
-    )
-
-    reranked: list[dict] = []
-    for result in response.results:
-        candidate = dict(candidates[result.index])
-        candidate["rerank_score"] = result.relevance_score
-        reranked.append(candidate)
-
-    # Results from Cohere are already sorted by relevance_score descending.
-    return reranked
+    scored = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
+    return [dict(c, rerank_score=float(score)) for score, c in scored[:top_n]]
 
 
 # ---------------------------------------------------------------------------
