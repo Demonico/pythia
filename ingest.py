@@ -262,6 +262,7 @@ def embed_and_store(
                         "page_number": section.page_number,
                         "status": paper.status,
                         "authors": paper.authors,
+                        "content": section.content,
                     },
                 )
             )
