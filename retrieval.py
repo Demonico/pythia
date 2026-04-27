@@ -150,13 +150,13 @@ def search(
     encoder = _get_encoder()
     vector = encoder.encode(query).tolist()
 
-    hits = qdrant.search(
+    hits = qdrant.query_points(
         collection_name=_COLLECTION,
-        query_vector=vector,
+        query=vector,
         query_filter=query_filter,
         limit=top_k,
         with_payload=True,
-    )
+    ).points
 
     return [
         {
