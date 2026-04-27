@@ -75,9 +75,9 @@ def _normalise_paper_id(raw: str) -> str:
 
 def _classify_status(first_page_text: str) -> str:
     lower = first_page_text.lower()
-    if "accepted" in lower:
+    if any(k in lower for k in ("adopted", "incorporated into", "merged into")):
         return "accepted"
-    if "rejected" in lower:
+    if any(k in lower for k in ("not adopted", "withdrawn", "rejected")):
         return "rejected"
     return "pending"
 
@@ -99,27 +99,61 @@ def extract_metadata(pages: list[str], pdf_path: Path) -> dict:
     ids = _PAPER_ID_RE.findall(front)
     paper_id = _normalise_paper_id(ids[0]) if ids else _derive_id_from_filename(pdf_path)
 
-    # Title — heuristic: first non-empty line of page 1 that looks like a title
+    # Title: first line of page 1 that looks like a title.
+    # Skip metadata fields, lines containing email addresses, and bare WG names.
+    _META_FIELD_RE = re.compile(
+        r'(?i)^(?:date|reply(?:\s+to)?|revises?|project|audience|source'
+        r'|doc(?:ument)?(?:\s*no\.?|ument\s+number|\s*#)?'
+        r'|(?:library|evolution|core|sg\d+|working)\s+(?:working\s+)?group'
+        r'|programming\s+language'
+        r'|authors?|editors?)\s*[:\-#@]?'
+    )
     title = ""
     for line in pages[0].splitlines():
         line = line.strip()
-        if len(line) > 10 and not _PAPER_ID_RE.match(line):
+        if (
+            len(line) > 10
+            and not _PAPER_ID_RE.search(line)
+            and not _META_FIELD_RE.match(line)
+            and not _DATE_RE.fullmatch(line)
+            and '@' not in line
+            and not line.startswith(('\u2022', '\u2013', '\u2014'))
+        ):
             title = line
             break
 
-    # Authors — look for "Author:" / "Authors:" or lines after the paper-id block
+    # Authors: look for "Author:" / "Authors:" / "Editor:" label at a line start
+    # in page 1 only (avoids matching mid-sentence uses of 'author' in the body).
     authors: list[str] = []
     author_match = re.search(
-        r"(?:Authors?|Editor|Editors?)\s*[:\-]?\s*(.+)", front, re.IGNORECASE
+        r'^(?:Authors?|Editor|Editors?)\s*[:\-]?\s*(.+)',
+        pages[0], re.IGNORECASE | re.MULTILINE,
     )
     if author_match:
         raw_authors = author_match.group(1)
-        # split on commas, semicolons, "and"
+        _CURLY_QUOTE_RE = re.compile(r'[\u201c\u201d\u2018\u2019]')
         authors = [
             a.strip()
-            for a in re.split(r"[,;]|\band\b", raw_authors)
-            if a.strip() and len(a.strip()) < 80
+            for a in re.split(r'[,;]|\band\b', raw_authors)
+            if (
+                a.strip()
+                and len(a.strip()) < 80
+                and not _CURLY_QUOTE_RE.search(a)
+                and not re.search(r'(?i)(blue|magenta|red|green|color)', a)
+                and not re.search(r'[a-z]{12,}', a)
+            )
         ]
+
+    # Fallback: scan front matter for lines that look like "Firstname Lastname"
+    # (exactly two capitalised words, no digits or punctuation).
+    if not authors:
+        _NAME_RE = re.compile(r'^[A-Z][a-z]{2,}(?:\s+[A-Z]\.?)?\s+[A-Z][a-z]{2,}$')
+        candidates = [
+            ln.strip()
+            for ln in front.splitlines()
+            if _NAME_RE.match(ln.strip()) and not re.search(r'[\d:()\[\]]', ln)
+        ]
+        authors = candidates[:6] if len(candidates) >= 2 else []
 
     # Date
     date_matches = _DATE_RE.findall(front)

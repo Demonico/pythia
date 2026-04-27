@@ -77,7 +77,7 @@ def get_paper(paper_id: str) -> dict[str, Any]:
 
 @app.get("/graph/{paper_id}")
 def get_graph(paper_id: str) -> dict[str, Any]:
-    ctx = retrieval.graph_context(paper_id.upper())
+    ctx = retrieval.graph_context(paper_id.strip().upper())
     if not ctx["cites"] and not ctx["cited_by"]:
         if not _GRAPH_PATH.exists():
             raise HTTPException(status_code=503, detail="Index not built yet — run ingest.py first")

@@ -1,3 +1,4 @@
+import math
 import os
 import requests
 import streamlit as st
@@ -84,7 +85,8 @@ with tab_search:
                 for item in results:
                     paper_id = item.get("paper_id", "")
                     section_type = item.get("section_type", "")
-                    score = item.get("rerank_score") or item.get("score", 0.0)
+                    raw = item.get("rerank_score") or item.get("score", 0.0)
+                    score = 1 / (1 + math.exp(-raw))
                     label = f"{paper_id} — {section_type} (score: {score:.3f})"
                     with st.expander(label):
                         st.write(f"**Title:** {item.get('title', '')}")

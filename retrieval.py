@@ -240,7 +240,7 @@ def graph_context(paper_id: str) -> dict:
     # at runtime (though networkx is available if needed).
     nodes: dict[str, dict] = {}
     for node in graph_data.get("nodes", []):
-        nid = node.get("id", node.get("paper_id", ""))
+        nid = node.get("id", node.get("paper_id", "")).strip()
         if nid:
             nodes[nid] = node
 
@@ -250,7 +250,7 @@ def graph_context(paper_id: str) -> dict:
     cites: list[dict] = []
     cited_by: list[dict] = []
 
-    for link in graph_data.get("links", []):
+    for link in graph_data.get("edges", []):
         source = link.get("source", "")
         target = link.get("target", "")
 
